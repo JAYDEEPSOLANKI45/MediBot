@@ -9,7 +9,7 @@ app.use(express.urlencoded({extended:true}));
 
 // mongodb
 const mongoose=require('mongoose')
-const MediBotUser=require("./mediBotUserSchema")
+const MediBotUser=require("./models/mediBotUserSchema")
 
 // dotenv
 require('dotenv').config();
