@@ -7,10 +7,6 @@ const express=require('express');
 const app=express();
 app.use(express.urlencoded({extended:true}));
 
-// mongodb
-const mongoose=require('mongoose')
-const MediBotUser=require("./models/mediBotUserSchema")
-
 // dotenv
 require('dotenv').config();
 const ACCOUNT_ID=process.env.TWILIO_ACCOUNT_ID;
@@ -20,8 +16,8 @@ const TwilioClient=twilio(ACCOUNT_ID,AUTH_TOKEN);
 // utils
 const connectMongoDB = require('./utils/connectMongo.js');
 const createUser = require('./utils/createUser.js');
-const getGeminiGeneratedResponse = require('./utils/getGeminiGeneratedResponse.js');
 const classifyUserGeneratedMessage = require('./utils/classifyUserGeneratedMessage');
+const respondAsRequest= require("./utils/respondAsRequest.js")
 
 // function to connect with mongoDB atlas
 connectMongoDB()
@@ -30,9 +26,9 @@ connectMongoDB()
 app.post("/webhook",async (req,res)=>{
     // classify the user message
     let classified = await classifyUserGeneratedMessage(req.body.Body);
-    // let reply = getGeminiGeneratedResponse()
-
-    let reply=classified;
+    
+    let reply=await respondAsRequest(classified,req.body.Body);
+    // let reply=classified
 
     // create user if it doesnt exist
     await createUser(req.body.ProfileName,req.body.From);
