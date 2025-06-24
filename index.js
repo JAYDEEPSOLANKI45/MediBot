@@ -38,8 +38,9 @@ async function run(prompt) {
 
 // twilio sends a post request to this endpoint for each message recieved on +14155238886
 app.post("/webhook",async (req,res)=>{
-    console.log(req.body);
-    let reply=await run(req.body.Body)
+    // console.log(req.body)
+    let prompt=`Imagine you are a classification model made to classify the text sent by the user. The user can ask about us which can be categorized into 'inquiry', user can tell his physical symptoms like if he/she has a flu,pain. user can ask to book cancel or just check on his appointments. or he may ask about himself, which is categorized in user-information. or it is just anything random. I want you to categorize the below message into these categories 1) inquiry 2) symptoms 3) book-appointment 4) cancel-appointment 5) check-appointment 6) user-information 7) random. **Important**: Only reply in the category, do not add anything extra to the reply. Now here is the message: ${req.body.Body}`
+    let reply=await run(prompt)
     let user=await MediBotUser.findOne({phone:req.body.From})
     if(!user)
         {

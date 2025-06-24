@@ -1,11 +1,10 @@
 const mongoose=require('mongoose');
-const mongodb=require('mongodb')
+
 const mediBotUserSchema=mongoose.Schema({
     username:String,
     phone:String,
-    address:String,
+    address:{city:String,state:String,pincode:Number},
     verified:Boolean,
-    current_booking:mongodb.ObjectId,
-    appointments:[mongodb.ObjectId]
+    appointments:[{type:mongoose.Schema.Types.ObjectId, ref:"Appointment"}]
 });
 module.exports=mongoose.model("MediBotUser",mediBotUserSchema)
