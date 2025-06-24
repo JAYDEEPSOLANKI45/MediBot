@@ -7,7 +7,9 @@ async function createUser(ProfileName,From)
         {
             user=new MediBotUser({username:ProfileName,phone:From})
             await user.save()
+            return user;
     }
+    return user;
 }
 
 module.exports = createUser;
