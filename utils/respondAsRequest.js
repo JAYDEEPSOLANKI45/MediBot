@@ -18,9 +18,9 @@ const handler = new Map([
     ["random", randomResponse]
 ]);
 
-async function respondAsRequest(classified,request)
+async function respondAsRequest(user,classified,request)
 {
-    return await handler.get(classified.trim())(request);
+    return await handler.get(classified.trim())(user,request);
 }
 
 module.exports = respondAsRequest;
