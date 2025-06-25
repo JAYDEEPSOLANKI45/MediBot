@@ -14,12 +14,37 @@ const respondAsRequest= require("./utils/respondAsRequest.js");
 const sendMessageToUser = require('./utils/sendMessageToUser.js');
 const { default: axios } = require('axios');
 
-// templates
-const sendListTemplate=require("./templates/sendListTemplate.js");
+//routes
+const authRoutes = require('./routes/auth');
+const clinicRoutes=require('./routes/clinic');
+app.use('/api/auth', authRoutes);
+app.use('/api/clinic', clinicRoutes);
+app.use('/api/appointments', require('./routes/appointments'));
 
 // models
 const Appointment=require("./models/appointmentSchema.js");
 const Clinic=require("./models/ClinicSchema.js");
+// Middleware
+app.use(express.json());
+
+// Session configuration
+app.use(session({
+    secret: process.env.SESSION_SECRET || 'your-secret-key',
+    resave: false,
+    saveUninitialized: false,
+    store: MongoStore.create({
+        mongoUrl: process.env.MONGODB_URI,
+        ttl: 24 * 60 * 60 // Session TTL (1 day)
+    }),
+    cookie: {
+        secure: false, //process.env.NODE_ENV === 'production' 
+        maxAge: 24 * 60 * 60 * 1000 // Cookie max age (1 day)
+    }
+}));
+
+const session = require('express-session');
+const MongoStore = require('connect-mongo');
+
 
 // function to connect with mongoDB atlas
 connectMongoDB();
@@ -40,9 +65,9 @@ app.post("/webhook",async (req,res)=>{
 
             // get reply according to request
             let reply=await respondAsRequest(user,classified,req.body.Body);
-
+            
             // create a reply using TwilioClient
-            sendMessageToUser(reply,req.body.From);
+            reply?sendMessageToUser(reply,req.body.From):console.log("no reply");
         }
         else if(req.body.MessageType=='location')
         {
@@ -52,12 +77,29 @@ app.post("/webhook",async (req,res)=>{
         }
         else if(req.body.MessageType=='interactive')
         {
+
+            /*if the last request was symptoms then current reply can dictate the flow of current conversation.. Yes means book an appoint
+            else leave the convo
+            */
+            if(user.lastRequest=="symptoms")
+            {
+                if(req.body.Body=="Yes")
+                {
+                    user.lastRequest="book-appointment";
+                    user.save();
+                    sendMessageToUser("Which clinic would you like to book an appointment with?",req.body.From);
+                }
+                else
+                {
+                    sendMessageToUser("Ok, Have a good day. Thank you for using our services.",req.body.From);
+                }
+            }
             /* refer to the last request made by the user:
                 if it was book-appointment then save the lastData as the clinic doc of the selected clinic
                 if it was book-appointment then save the lastData time as the selected time slot
                 save the whole lastData as the appointment, book appointment in the said clinic on said time.
             */
-           if(user.lastRequest=='book-appointment')
+           else if(user.lastRequest=='book-appointment')
            {
                 if(req.body.Body.substring(0,6)=="clinic")
                 {
@@ -82,7 +124,7 @@ app.post("/webhook",async (req,res)=>{
                     /*
                         not assigning doctor as of now.
                     */
-                    clinic.appointments.push(appointment._id);
+                    clinic["appointment"]=appointment._id;
                     user['lastRequest']="None";
                     user['lastData']=null;
                     user.save();
@@ -90,6 +132,7 @@ app.post("/webhook",async (req,res)=>{
                     appointment.save();
                 }
            }
+           
         }
         else
         {
@@ -118,6 +161,12 @@ app.post("/webhook",async (req,res)=>{
     }
 })
 
+
+// Error handling middleware
+app.use((err, req, res, next) => {
+    console.error(err.stack);
+    res.status(500).json({ message: 'Something went wrong!' });
+});
 
 // port
 app.listen(8080,(req,res)=>{
