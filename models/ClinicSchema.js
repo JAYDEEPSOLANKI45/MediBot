@@ -3,6 +3,7 @@ const mongoose=require('mongoose')
 const clinicSchema = mongoose.Schema(
   {
     name: { type: String, required: true },
+    description: { type: String },
     address: {
       lat: { type: String, required: true },
       long: { type: String, required: true },

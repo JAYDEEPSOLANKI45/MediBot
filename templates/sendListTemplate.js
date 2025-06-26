@@ -1,4 +1,5 @@
 const twilio=require('twilio');
+const Pincode = require('../models/PincodeSchema');
 
 const ACCOUNT_ID=process.env.TWILIO_ACCOUNT_ID;
 const AUTH_TOKEN=process.env.TWILIO_AUTH_TOKEN;
@@ -52,42 +53,47 @@ const TwilioClient=twilio(ACCOUNT_ID,AUTH_TOKEN);
 // }
 
 
-const clinics = [
-  {
-    name: 'Green Valley Clinic',
-    id: 'clinic_001',
-    description: 'Main Street, Open 9–5',
-  },
-  {
-    name: 'Sunshine Health',
-    id: 'clinic_002',
-    description: 'Near Park, Open 10–6',
-  },
-  {
-    name: 'Lifecare',
-    id: 'clinic_003',
-    description: 'Central Market, Open 8–4',
-  }
-];
+// const clinics = [
+//   {
+//     name: 'Green Valley Clinic',
+//     id: 'clinic_001',
+//     description: 'Main Street, Open 9–5',
+//   },
+//   {
+//     name: 'Sunshine Health',
+//     id: 'clinic_002',
+//     description: 'Near Park, Open 10–6',
+//   },
+//   {
+//     name: 'Lifecare',
+//     id: 'clinic_003',
+//     description: 'Central Market, Open 8–4',
+//   }
+// ];
 
 function generateVariables(clinics) {
   const vars = {};
   clinics.forEach((clinic, index) => {
     const base = index * 3;
     vars[`${1 + base}`] = clinic.name;
-    vars[`${2 + base}`] = clinic.id;
+    vars[`${2 + base}`] = clinic._id;
     vars[`${3 + base}`] = clinic.description;
   });
+  console.log(vars)
   return vars;
 }
 
-async function sendListTemplate(to) {
+
+async function sendListTemplate(user) {
   try {
+    let clinics = await Pincode.findOne({pincode:user.address.pincode}).populate('clinics');
+    console.log(clinics.clinics);
+    JSON.stringify(generateVariables(clinics.clinics))
     const response = await TwilioClient.messages.create({
       from: 'whatsapp:+14155238886', 
-      to: to, 
+      to: user.phone, 
       contentSid: 'HXdc57c43a8b13bc105b8388f0d0c32ae7',
-      contentVariables: JSON.stringify(generateVariables(clinics)),
+      contentVariables: JSON.stringify(generateVariables(clinics.clinics)),
     });
 
     console.log('Message SID:', response.sid);

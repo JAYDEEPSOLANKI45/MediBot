@@ -1,5 +1,5 @@
 const mongoose=require('mongoose');
-const mediBotUser = require('./mediBotUserSchema');
+const MediBotUser = require('./mediBotUserSchema');
 const Clinic = require('./ClinicSchema');
 
 
