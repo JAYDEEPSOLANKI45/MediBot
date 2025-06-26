@@ -105,7 +105,6 @@ app.post("/webhook", async (req, res) => {
           );
         }
       } else if (user.lastRequest == "book-appointment") {
-        console.log(req.body.Body);
           if(Mongoose.Types.ObjectId.isValid(req.body.Body)){
            user.lastData={"clinicId":req.body.Body};
            user.save();
@@ -117,7 +116,7 @@ app.post("/webhook", async (req, res) => {
         else
         {
           await sendMessageToUser(
-            "We lost a context of this convorsation. Let's start again. How can I help you?.",
+            "We lost a context of this conversation. Let's start again. How can I help you?.",
             req.body.From
           );
           user.lastRequest="None";

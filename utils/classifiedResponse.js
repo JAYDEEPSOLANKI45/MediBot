@@ -70,12 +70,16 @@ async function bookAppointmentResponse(user, request) {
   return null;
 }
 async function cancelAppointmentResponse(user, request) {
-  await Appointment.findByIdAndDelete(user.appointment._id);
-  user["lastRequest"] = "cancel-appointment";
-  await user.save();
-  return await getGeminiGeneratedResponse(
-    "Tell user that their appointment has been cancelled, tell them to come again in case of any queries."
-  );
+  if(user.appointment)
+  {
+    await Appointment.findByIdAndDelete(user.appointment._id);
+    user["lastRequest"] = "cancel-appointment";
+    await user.save();
+    return await getGeminiGeneratedResponse(
+      "Tell user that their appointment has been cancelled, tell them to come again in case of any queries."
+    );
+  }
+  return "You don't have any appointment booked for now. Do you need help with with anything?"
 }
 async function checkAppointmentResponse(user, request) {
   let prompt = "";
