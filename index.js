@@ -21,16 +21,13 @@ app.use("/api/auth", authRoutes);
 app.use("/api/clinic", clinicRoutes);
 app.use("/api/appointments", require("./routes/appointments"));
 
-// models
-const Appointment = require("./models/appointmentSchema.js");
-const Clinic = require("./models/ClinicSchema.js");
 // Middleware
 app.use(express.json());
 
 const session = require("express-session");
 const MongoStore = require("connect-mongo");
 const { bookAppointmentResponse } = require("./utils/classifiedResponse.js");
-const Mongoose  = require("mongoose");
+const Mongoose = require("mongoose");
 // Session configuration
 app.use(
   session({
@@ -66,7 +63,9 @@ app.post("/webhook", async (req, res) => {
       let reply = await respondAsRequest(user, classified, req.body.Body);
 
       // create a reply using TwilioClient
-      reply ? sendMessageToUser(reply, req.body.From) : console.log("no reply");
+      reply
+        ? sendMessageToUser(reply, req.body.From)
+        : console.log("flow changed");
     } else if (req.body.MessageType == "location") {
       let address = await axios.get(
         `https://nominatim.openstreetmap.org/reverse?format=json&lat=${req.body.Latitude}&lon=${req.body.Longitude}`
@@ -88,39 +87,37 @@ app.post("/webhook", async (req, res) => {
         if (req.body.Body == "Yes") {
           // sendMessageToUser("Which clinic would you like to book an appointment with?",req.body.From);
           await bookAppointmentResponse(user, "book request made");
-        } else if(req.body.Body == "No") {
-          user.lastRequest="None";
-          user.lastData=null;
-          user.save();
-          sendMessageToUser(
+        } else if (req.body.Body == "No") {
+          user.lastRequest = "None";
+          user.lastData = null;
+          await user.save();
+          await sendMessageToUser(
             "Ok, Have a good day. Thank you for using our services.",
             req.body.From
           );
-        }
-        else
-        {
-          sendMessageToUser(
+        } else {
+          await sendMessageToUser(
             "I am sorry I couldn't understand your request, can you please specify again.",
             req.body.From
           );
         }
       } else if (user.lastRequest == "book-appointment") {
-          if(Mongoose.Types.ObjectId.isValid(req.body.Body)){
-           user.lastData={"clinicId":req.body.Body};
-           user.save();
-            await sendMessageToUser(
+        if (Mongoose.Types.ObjectId.isValid(req.body.Body)) {
+          user.lastRequest = "book-appointment-time";
+          user.lastData = { clinicId: req.body.Body };
+
+          user.save();
+          await sendMessageToUser(
             "Please provide a time suitable for your visit. example: 11AM, 2PM, 6PM",
             req.body.From
           );
-        }
-        else
-        {
+        } else {
           await sendMessageToUser(
             "We lost a context of this conversation. Let's start again. How can I help you?.",
             req.body.From
           );
-          user.lastRequest="None";
-          user.lastData=null;
+          user.lastRequest = "None";
+          user.lastData = null;
           user.save();
         }
       }
@@ -159,6 +156,10 @@ app.post("/webhook", async (req, res) => {
       );
     }
   }
+});
+
+app.post("/status-webhook", async (req, res) => {
+  console.log(req.body);
 });
 
 // Error handling middleware
