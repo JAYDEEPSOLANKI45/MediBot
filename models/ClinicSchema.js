@@ -16,6 +16,8 @@ const clinicSchema = mongoose.Schema(
     appointments: [
       { type: mongoose.Schema.Types.ObjectId, ref: "Appointment" },
     ],
+    openingTime: String,  // e.g. "09:00"
+    closingTime: String,  // e.g. "17:00"
   },
   { timestamps: true }
 );

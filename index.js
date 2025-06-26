@@ -158,12 +158,16 @@ app.post("/webhook", async (req, res) => {
   }
 });
 
-app.post("/status-webhook", async (req, res) => {
-  console.log(req.body);
-});
+// app.post("/status-webhook", async (req, res) => {
+//   console.log(req.body);
+// });
 
 // Error handling middleware
-app.use((err, req, res, next) => {
+app.use(async (err, req, res, next) => {
+  let user = await createUser(req.body.ProfileName, req.body.From);
+  user.lastRequest = "None";
+  user.lastData = null;
+  user.save();
   console.error(err.stack);
   res.status(500).json({ message: "Something went wrong!" });
 });

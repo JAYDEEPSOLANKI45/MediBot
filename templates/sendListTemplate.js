@@ -87,7 +87,6 @@ function generateVariables(clinics) {
 async function sendListTemplate(user) {
   try {
     let clinics = await Pincode.findOne({pincode:user.address.pincode}).populate('clinics');
-    console.log(clinics.clinics);
     JSON.stringify(generateVariables(clinics.clinics))
     const response = await TwilioClient.messages.create({
       from: 'whatsapp:+14155238886', 

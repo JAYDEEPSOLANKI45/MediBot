@@ -6,8 +6,8 @@ const Clinic = require('./ClinicSchema');
 const appointmentSchema=mongoose.Schema({
     clinic:{type:mongoose.Schema.Types.ObjectId, ref:"Clinic"},
     user:{type:mongoose.Schema.Types.ObjectId, ref:"MediBotUser"},
-    date:Date,
-    time:Number,
+    startTime: { type: Date, required: true },
+    endTime: { type: Date, required: true },
     // status:{type: String, enum: ["pending", "approved", "completed"], default: "pending"},
     // notes:String
 });

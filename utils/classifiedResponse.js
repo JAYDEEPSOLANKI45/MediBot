@@ -3,6 +3,7 @@ const sendListTemplate = require("../templates/sendListTemplate");
 const getGeminiGeneratedResponse = require("./getGeminiGeneratedResponse");
 const Appointment = require("../models/appointmentSchema");
 const Clinic = require("../models/ClinicSchema");
+const bookAppointment = require("./bookAppointment");
 
 
 async function inquiryResponse(user, request) {
@@ -40,13 +41,14 @@ async function bookAppointmentResponse(user, request) {
 
         // if user.lastData is there, which means, user has selected a clinic and now the time needs to be asked
   if (user.lastRequest=="book-appointment-time") {
-    let timeInMinutes = await getGeminiGeneratedResponse(
+    let timeInFormat = await getGeminiGeneratedResponse(
       // time not converted into minutes correctly 11PM - > 10:00
-      "Convert the given time inside this message into minutes, ex. 2PM -> 840, 5:50 PM -> 1070, **important- return only in number (minutes), no additional message with it** here is user's message: " +
+      "Convert the given time into proper format.**return only in the format : ex: 2:00PM, 11:23AM etc.** if the user have given a tomorrows date then -> tomorrow 3PM. here is user's message: " +
         request
     );
-
-    let appointment=new Appointment({clinic:user.lastData.clinicId,user:user._id,data:Date.now(),time:timeInMinutes.trim()});
+    let appointment = await bookAppointment(user, timeInFormat);
+    if (!appointment) return null;
+    // let appointment=new Appointment({clinic:user.lastData.clinicId,user:user._id,data:Date.now(),time:timeInMinutes.trim()});
     user.appointment=appointment._id;
     let clinic=await Clinic.findOne({_id:user.lastData.clinicId});
     /*
