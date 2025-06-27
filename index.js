@@ -50,7 +50,6 @@ app.use(
 connectMongoDB().then(() => {
   // Initialize scheduled tasks after database connection is established
   setupScheduledTasks();
-  console.log('Scheduled tasks for appointment expiration check initialized');
 }).catch(err => {
   console.error('Failed to initialize scheduled tasks:', err);
 });

@@ -16,7 +16,7 @@ async function checkExpiredAppointments() {
       status: 'cancelled'
     }
   );
-  let user=await mediBotUser.findOne({_id:appointment.user});
+  let user=await mediBotUser.findOne({_id:result.user});
   user.appointment=undefined;
   await user.save();
 

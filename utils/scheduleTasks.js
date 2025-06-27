@@ -13,7 +13,6 @@ function setupScheduledTasks() {
     }
   }, 60 * 1000); // Run every minutes
 
-  console.log("Scheduled tasks initialized");
 }
 
 module.exports = setupScheduledTasks;
