@@ -1,75 +1,21 @@
 const twilio=require('twilio');
 const Pincode = require('../models/PincodeSchema');
+const sendMessageToUser = require('./appointmentReminderTemplate');
 
 const ACCOUNT_ID=process.env.TWILIO_ACCOUNT_ID;
 const AUTH_TOKEN=process.env.TWILIO_AUTH_TOKEN;
 const TwilioClient=twilio(ACCOUNT_ID,AUTH_TOKEN);
-
-// const clinics = [
-//   {
-//     name: 'Green Valley Clinic',
-//     id: 'clinic_001',
-//     description: 'Main Street, Open 9 AM – 5 PM',
-//   },
-//   {
-//     name: 'Sunshine Health Center',
-//     id: 'clinic_002',
-//     description: 'Park Road, Open 10 AM – 6 PM',
-//   },
-//   {
-//     name: 'Lifecare Diagnostics',
-//     id: 'clinic_003',
-//     description: 'Central Market, Open 8 AM – 4 PM',
-//   }
-//   // Add up to 10 items
-// ];
-
-// function generateContentVariables() {
-//   const vars = {};
-
-//   clinics.forEach((clinic, index) => {
-//     const varIndex = 3 + index; // 43, 44, 45... for item names
-//     vars[`${varIndex}`] = clinic.name;
-//     vars[`${varIndex + 10}`] = clinic.id;
-//     vars[`${varIndex + 20}`] = clinic.description;
-//   });
-
-//   return vars;
-// }
-
-// async function sendListTemplate() {
-//   try {
-//     const response = await TwilioClient.messages.create({
-//       from: 'whatsapp:+14155238886', // Your Twilio WhatsApp number
-//       to: 'whatsapp:+91XXXXXXXXXX',  // Replace with recipient
-//       contentSid: 'HX2348403e58620d0026a563d6deb9743b',
-//       contentVariables: JSON.stringify(generateContentVariables()),
-//     });
-
-//     console.log('Message sent with SID:', response.sid);
-//   } catch (error) {
-//     console.error('Failed to send message:', error.message);
-//   }
-// }
-
-
-// const clinics = [
-//   {
-//     name: 'Green Valley Clinic',
-//     id: 'clinic_001',
-//     description: 'Main Street, Open 9–5',
-//   },
-//   {
-//     name: 'Sunshine Health',
-//     id: 'clinic_002',
-//     description: 'Near Park, Open 10–6',
-//   },
-//   {
-//     name: 'Lifecare',
-//     id: 'clinic_003',
-//     description: 'Central Market, Open 8–4',
-//   }
-// ];
+const arrayOfTemplate = [process.env.Book_APPOINMENT_ONE,
+  process.env.Book_APPOINMENT_TWO,
+  process.env.Book_APPOINMENT_THREE,
+  process.env.Book_APPOINMENT_FOUR,
+  process.env.Book_APPOINMENT_FIVE,
+  process.env.Book_APPOINMENT_SIX,
+  process.env.Book_APPOINMENT_SEVEN,
+  process.env.Book_APPOINMENT_EIGHT,
+  process.env.Book_APPOINMENT_NINE,
+  process.env.Book_APPOINMENT_TEN
+]
 
 function generateVariables(clinics) {
   const vars = {};
@@ -87,11 +33,20 @@ function generateVariables(clinics) {
 async function sendListTemplate(user) {
   try {
     let clinics = await Pincode.findOne({pincode:user.address.pincode}).populate('clinics');
-    JSON.stringify(generateVariables(clinics.clinics))
+
+    
+    if (clinics.clinics.length == 0) {
+      await sendMessageToUser('No clinics found for your pincode. Please try again later.', user.phone);
+      return;
+    }
+
+    let templateId=arrayOfTemplate[Math.min(9, clinics.clinics.length - 1)];
+  
+    JSON.stringify(generateVariables(clinics.clinics.slice(0, 10)));
     const response = await TwilioClient.messages.create({
       from: 'whatsapp:+14155238886', 
       to: user.phone, 
-      contentSid: process.env.SEND_LIST,
+      contentSid: templateId,
       contentVariables: JSON.stringify(generateVariables(clinics.clinics)),
     });
 
