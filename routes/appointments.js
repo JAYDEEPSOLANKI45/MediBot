@@ -10,7 +10,7 @@ const getGeminiGeneratedResponse = require('../utils/getGeminiGeneratedResponse'
 router.get('/', isAuthenticated, async (req, res) => {
     try {
         const appointments = await Appointment.find({ clinic: req.clinicId });
-        res.status(200).json(appointments);
+        res.status(200).json(appointments.populate('user'));
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
@@ -28,7 +28,7 @@ router.get('/status/:status', isAuthenticated, async (req, res) => {
             clinic: req.clinicId,
             status: status 
         });
-        res.status(200).json(appointments);
+        res.status(200).json(appointments.populate('user'));
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
@@ -53,7 +53,7 @@ router.patch('/:id/cancel', isAuthenticated, async (req, res) => {
 
         await sendMessageToUser('We are sorry to inform you that the clinic has cancelled your appointment. Would you like to book another?', user.phone);
 
-        res.status(200).json(appointment);
+        res.status(200).json(appointment.populate('user'));
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
@@ -103,7 +103,7 @@ router.patch('/:id/approve', isAuthenticated, async (req, res) => {
         let user = await mediBotUser.findOne({_id: appointment.user});
         await sendMessageToUser('Your appointment has been approved by the clinic.', user.phone);
         
-        res.status(200).json(appointment);
+        res.status(200).json(appointment.populate(user));
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
@@ -125,7 +125,7 @@ router.patch('/:id/complete', isAuthenticated, async (req, res) => {
         let user = await mediBotUser.findOne({_id: appointment.user});
         await sendMessageToUser('Thank you for visiting our clinic. Your appointment has been marked as completed.', user.phone);
         
-        res.status(200).json(appointment);
+        res.status(200).json(appointment.populate('user'));
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
