@@ -10,7 +10,9 @@ const getGeminiGeneratedResponse = require('../utils/getGeminiGeneratedResponse'
 router.get('/', isAuthenticated, async (req, res) => {
     try {
         const appointments = await Appointment.find({ clinic: req.clinicId });
-        res.status(200).json(appointments.populate('user'));
+        console.log(appointments)
+        const populatedAppointments = await Appointment.find({ clinic: req.clinicId }).populate('user');
+        res.status(200).json(populatedAppointments);
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
@@ -27,8 +29,8 @@ router.get('/status/:status', isAuthenticated, async (req, res) => {
         const appointments = await Appointment.find({ 
             clinic: req.clinicId,
             status: status 
-        });
-        res.status(200).json(appointments.populate('user'));
+        }).populate('user');
+        res.status(200).json(appointments);
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
@@ -42,18 +44,18 @@ router.patch('/:id/cancel', isAuthenticated, async (req, res) => {
             { _id: req.params.id, clinic: req.clinicId },
             { status: 'cancelled' },
             { new: true }
-        );
+        ).populate('user');
         
         if (!appointment) {
             return res.status(404).json({ message: 'Appointment not found' });
         }
         let user = await mediBotUser.findOne({_id: appointment.user});
-        user.appointment=undefined;
+        user.appointment = undefined;
         await user.save();
 
         await sendMessageToUser('We are sorry to inform you that the clinic has cancelled your appointment. Would you like to book another?', user.phone);
 
-        res.status(200).json(appointment.populate('user'));
+        res.status(200).json(appointment);
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
@@ -94,16 +96,15 @@ router.patch('/:id/approve', isAuthenticated, async (req, res) => {
             { _id: req.params.id, clinic: req.clinicId, status: 'pending' },
             { status: 'approved' },
             { new: true }
-        );
+        ).populate('user');
         
         if (!appointment) {
             return res.status(404).json({ message: 'Pending appointment not found' });
         }
         
-        let user = await mediBotUser.findOne({_id: appointment.user});
-        await sendMessageToUser('Your appointment has been approved by the clinic.', user.phone);
+        await sendMessageToUser('Your appointment has been approved by the clinic.', appointment.user.phone);   
         
-        res.status(200).json(appointment.populate(user));
+        res.status(200).json(appointment);
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
@@ -116,16 +117,15 @@ router.patch('/:id/complete', isAuthenticated, async (req, res) => {
             { _id: req.params.id, clinic: req.clinicId, status: 'approved' },
             { status: 'completed' },
             { new: true }
-        );
+        ).populate('user');
         
         if (!appointment) {
             return res.status(404).json({ message: 'Approved appointment not found' });
         }
         
-        let user = await mediBotUser.findOne({_id: appointment.user});
-        await sendMessageToUser('Thank you for visiting our clinic. Your appointment has been marked as completed.', user.phone);
+        await sendMessageToUser('Thank you for visiting our clinic. Your appointment has been marked as completed.', appointment.user.phone);
         
-        res.status(200).json(appointment.populate('user'));
+        res.status(200).json(appointment);
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
