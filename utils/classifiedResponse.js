@@ -58,7 +58,7 @@ async function bookAppointmentResponse(user, request) {
       console.log("timeInformate:"+timeInFormat);
       if(timeInFormat.trim()=="invalid")
       {
-        return await getGeminiGeneratedResponse("Assume that User provided invalid time, tell them that either it was not in correct format or it was already passed.");
+        return "You provided an invalid Time format. Either the time is already passed or the time wasn't mentioned. Please provide in a proper time format."
       }
       console.log("hey")
       let appointment = await bookAppointment(user, timeInFormat);

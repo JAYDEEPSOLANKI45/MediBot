@@ -41,7 +41,7 @@ async function sendListTemplate(user) {
     }
 
     let templateId=arrayOfTemplate[Math.min(9, clinics.clinics.length - 1)];
-  
+    console.log(templateId)
     JSON.stringify(generateVariables(clinics.clinics.slice(0, 10)));
     const response = await TwilioClient.messages.create({
       from: 'whatsapp:+14155238886', 

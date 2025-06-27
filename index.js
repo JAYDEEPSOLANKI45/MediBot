@@ -48,26 +48,25 @@ const { bookAppointmentResponse } = require("./utils/classifiedResponse.js");
 //routes
 const authRoutes = require("./routes/auth");
 const clinicRoutes = require("./routes/clinic");
+const saveLocation = require("./utils/saveLocation.js");
+const resetUser = require("./utils/resetUser.js");
 app.use("/api/auth", authRoutes);
 app.use("/api/clinic", clinicRoutes);
 app.use("/api/appointments", require("./routes/appointments"));
 
 // function to connect with mongoDB atlas
-connectMongoDB().then(() => {
-  // Initialize scheduled tasks after database connection is established
-//   setupScheduledTasks();
-// }).catch(err => {
-//   console.error('Failed to initialize scheduled tasks:', err);
-});
+connectMongoDB();
 
 // twilio sends a post request to this endpoint for each message recieved on +14155238886
 app.post("/webhook", async (req, res) => {
   console.log(req.body);
+
   // create user if it doesnt exist
   let user = await createUser(req.body.ProfileName, req.body.From);
 
   if (user.verified) {
-    if (req.body.MessageType == "text") {
+    if (req.body.MessageType == "text") 
+    {
       // classify the user message
       let classified = await classifyUserGeneratedMessage(req.body.Body);
 
@@ -75,52 +74,50 @@ app.post("/webhook", async (req, res) => {
       let reply = await respondAsRequest(user, classified, req.body.Body);
 
       // create a reply using TwilioClient
-      reply
-        ? sendMessageToUser(reply, req.body.From)
-        : console.log("flow changed");
-    } else if (req.body.MessageType == "location") {
-      let address = await axios.get(
-        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${req.body.Latitude}&lon=${req.body.Longitude}`
-      );
-      user["address"] = {
-        lat: req.body.Latitude,
-        long: req.body.Longitude,
-        pincode: address.data.address.postcode,
-      };
-      sendMessageToUser(
-        "Your location has been updated, How can I help you further?",
-        req.body.From
-      );
-    } else if (req.body.MessageType == "interactive") {
-      /*if the last request was symptoms then current reply can dictate the flow of current conversation.. Yes means book an appoint
-            else leave the convo
-            */
+      reply? sendMessageToUser(reply, req.body.From):console.log("Interactive message sent to user.");
+    } 
+    else if (req.body.MessageType == "location")
+    {
+      saveLocation(user,req.body.Latitude,req.body.Longitude);
+      await sendMessageToUser("Your location has been updated, How can I help you further?",req.body.From);
+    }
+    else if (req.body.MessageType == "interactive")
+    {
+      /*  if the last request was symptoms then current reply can dictate the flow of current conversation.. Yes means book an appoint
+          else leave the convo
+      */
       if (user.lastRequest == "symptoms") {
-        if (req.body.Body == "Yes") {
-          // sendMessageToUser("Which clinic would you like to book an appointment with?",req.body.From);
-          let response=await bookAppointmentResponse(user, "book request made");
-          if(response)
+
+        if (req.body.Body == "Yes") 
+          {
+            // sendMessageToUser("Which clinic would you like to book an appointment with?",req.body.From);
+            let response=await bookAppointmentResponse(user, "book request made");
+            if(response)
+            {
+              await sendMessageToUser(
+              response,
+              req.body.From
+            );
+            }
+          } 
+          else if (req.body.Body == "No") 
+          {
+            resetUser(user);
+            await sendMessageToUser(
+              "Ok, Have a good day. Thank you for using our services.",
+              req.body.From
+            );
+          }
+          else
           {
             await sendMessageToUser(
-            response,
-            req.body.From
-          );
+              "I am sorry I couldn't understand your request, can you please specify again.",
+              req.body.From
+            );
           }
-        } else if (req.body.Body == "No") {
-          user.lastRequest = "None";
-          user.lastData = null;
-          await user.save();
-          await sendMessageToUser(
-            "Ok, Have a good day. Thank you for using our services.",
-            req.body.From
-          );
-        } else {
-          await sendMessageToUser(
-            "I am sorry I couldn't understand your request, can you please specify again.",
-            req.body.From
-          );
-        }
-      } else if (user.lastRequest == "book-appointment") {
+      } 
+      else if (user.lastRequest == "book-appointment") 
+      {
         if (Mongoose.Types.ObjectId.isValid(req.body.Body)) {
           user.lastRequest = "book-appointment-time";
           user.lastData = { clinicId: req.body.Body };
@@ -135,9 +132,7 @@ app.post("/webhook", async (req, res) => {
             "We lost a context of this conversation. Let's start again. How can I help you?.",
             req.body.From
           );
-          user.lastRequest = "None";
-          user.lastData = null;
-          user.save();
+          resetUser(user);
         }
       }
     } else {
@@ -146,7 +141,8 @@ app.post("/webhook", async (req, res) => {
         req.body.From
       );
     }
-  } else {
+  } 
+  else {
     if (req.body.MessageType == "text") {
       // create a reply using TwilioClient
       await sendMessageToUser(
@@ -154,20 +150,13 @@ app.post("/webhook", async (req, res) => {
         req.body.From
       );
     } else if (req.body.MessageType == "location") {
-      let address = await axios.get(
-        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${req.body.Latitude}&lon=${req.body.Longitude}`
-      );
-      user["address"] = {
-        lat: req.body.Latitude,
-        long: req.body.Longitude,
-        pincode: address.data.address.postcode,
-      };
+      user["verified"] = true;
+      saveLocation(user,req.body.Latitude,req.body.Longitude);
       await sendMessageToUser(
         "Thank you, Your location has been added. How can I help you today?",
         req.body.From
       );
-      user["verified"] = true;
-      await user.save();
+      
     } else {
       await sendMessageToUser(
         "Other media types will be supported in future versions. Thank you for your support.",
@@ -177,16 +166,10 @@ app.post("/webhook", async (req, res) => {
   }
 });
 
-// app.post("/status-webhook", async (req, res) => {
-//   console.log(req.body);
-// });
-
 // Error handling middleware
 app.use(async (err, req, res, next) => {
   let user = await createUser(req.body.ProfileName, req.body.From);
-  user.lastRequest = "None";
-  user.lastData = null;
-  user.save();
+  resetUser(user);
   console.error(err.stack);
   res.status(500).json({ message: "Something went wrong!" });
 });
