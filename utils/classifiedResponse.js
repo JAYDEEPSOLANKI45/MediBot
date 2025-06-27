@@ -113,7 +113,9 @@ async function cancelAppointmentResponse(user, request) {
 async function checkAppointmentResponse(user, request) {
   let prompt = "";
   if (user.appointment) {
-    prompt = `User:${JSON.stringify(user)}, has a request:${request}, which is classified as check-appointment, generate an appropriate response for them.`;
+    let populatedUser=await user.populate('appointment');
+    console.log(populatedUser);
+    prompt = `User has made an appointment, here is the data about user:${populatedUser}, has a request:${request}, which is classified as check-appointment, generate an appropriate response for them.`;
   } else {
     prompt = `tell the user that they don't have any appointment booked.`;
   }
