@@ -46,16 +46,21 @@ async function bookAppointmentResponse(user, request) {
         }
     // if user.lastData is there, which means, user has selected a clinic and now the time needs to be asked
     if (user.lastRequest=="book-appointment-time") {
-      let timeInFormat = await getGeminiGeneratedResponse(
-        // change the prompt to : if the given time is invalid (the time has passed) then return "invalid" as a reply. **important for prompt - consider current date and time for  this process**
-        "Convert the given time into proper format  if the given time is invalid (the time or date has passed) then return 'invalid' as a reply. **important for prompt - consider current date and time for this process**.**return only in the format : ex: 2:00PM, 11:23AM etc.** if the user have given a tomorrows date then -> tomorrow 3PM. here is user's message: " +
-          request
-      );
+      let timeInFormat = await getGeminiGeneratedResponse(`You are given a user's message that contains a time or time-related phrase. Your task is to:
+                1. Convert the given time into a proper 12-hour format.
+                   - Use this format exactly: H:MMAM/PM or H:MMPM (e.g., 2:00PM, 11:23AM).
+                2. If the user's message refers to a time that has already passed (compared to the current date and time), return only this word: **invalid**
+                3. If the user's message refers to a valid time on a future date (like tomorrow), return in this format: **tomorrow 3:00PM**
+                4. Use the current date and time as your reference when deciding whether the time is valid or not.
+                5. Do not explain your reasoning. Only return the formatted time or the word "invalid".
+                Here is the user's message: ${request}`);
+              
       console.log("timeInformate:"+timeInFormat);
-      if(timeInFormat=="invalid")
+      if(timeInFormat.trim()=="invalid")
       {
-        return await getGeminiGeneratedResponse("Tell the user that they have given an invalid time. the time can not be from the past. request them to provide a valid time.")
+        return await getGeminiGeneratedResponse("Assume that User provided invalid time, tell them that either it was not in correct format or it was already passed.");
       }
+      console.log("hey")
       let appointment = await bookAppointment(user, timeInFormat);
       if (!appointment) return null;
       // let appointment=new Appointment({clinic:user.lastData.clinicId,user:user._id,data:Date.now(),time:timeInMinutes.trim()});
