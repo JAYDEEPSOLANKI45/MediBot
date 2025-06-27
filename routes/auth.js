@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
+const passport = require('passport');
 const Clinic = require('../models/ClinicSchema');
 const Pincode = require('../models/PincodeSchema');
 const { isAuthenticated } = require('../middleware/auth');
@@ -43,41 +44,67 @@ router.post('/register', async (req, res) => {
     }
 });
 
-// Login clinic
-router.post('/login', async (req, res) => {
-    try {
-        const { email, password } = req.body;
-
-        // Find clinic by email
-        const clinic = await Clinic.findOne({ email });
+// Login clinic using Passport
+router.post('/login', (req, res, next) => {
+    passport.authenticate('local', (err, clinic, info) => {
+        if (err) {
+            console.error('Login error:', err);
+            return res.status(500).json({ message: 'Error logging in' });
+        }
+        
         if (!clinic) {
-            return res.status(401).json({ message: 'Invalid credentials' });
+            return res.status(401).json({ message: info.message || 'Invalid credentials' });
         }
-
-        // Verify password
-        const isValidPassword = await bcrypt.compare(password, clinic.password);
-        if (!isValidPassword) {
-            return res.status(401).json({ message: 'Invalid credentials' });
-        }
-
-        // Set session
-        req.session.clinicId = clinic._id;
-
-        res.json({ message: 'Logged in successfully' });
-    } catch (error) {
-        console.error('Login error:', error);
-        res.status(500).json({ message: 'Error logging in' });
-    }
+        
+        // Log in the user
+        req.login(clinic, (err) => {
+            if (err) {
+                console.error('Session error:', err);
+                return res.status(500).json({ message: 'Error logging in' });
+            }
+            
+            // Set session for backward compatibility
+            req.session.clinicId = clinic._id;
+            
+            return res.json({ message: 'Logged in successfully' });
+        });
+    })(req, res, next);
 });
 
 // Logout clinic
 router.post('/logout', isAuthenticated, (req, res) => {
-    req.session.destroy((err) => {
+    // Passport logout function
+    req.logout(function(err) {
         if (err) {
             return res.status(500).json({ message: 'Error logging out' });
         }
-        res.json({ message: 'Logged out successfully' });
+        
+        // Destroy session for complete cleanup
+        req.session.destroy((err) => {
+            if (err) {
+                return res.status(500).json({ message: 'Error destroying session' });
+            }
+            res.json({ message: 'Logged out successfully' });
+        });
     });
+});
+
+// Test route to check authentication status
+router.get('/status', (req, res) => {
+    if (req.isAuthenticated()) {
+        return res.json({
+            authenticated: true,
+            user: {
+                id: req.user._id,
+                name: req.user.name,
+                email: req.user.email
+            }
+        });
+    } else {
+        return res.json({
+            authenticated: false
+        });
+    }
 });
 
 module.exports = router;

@@ -2,34 +2,15 @@
 const express = require("express");
 const app = express();
 app.use(express.urlencoded({ extended: true }));
+app.use(express.json());
 
 // dotenv
 require("dotenv").config();
 
-// utils
-const connectMongoDB = require("./utils/connectMongo.js");
-const createUser = require("./utils/createUser.js");
-const classifyUserGeneratedMessage = require("./utils/classifyUserGeneratedMessage");
-const respondAsRequest = require("./utils/respondAsRequest.js");
-const sendMessageToUser = require("./utils/sendMessageToUser.js");
-const setupScheduledTasks = require("./utils/scheduleTasks.js");
-const { default: axios } = require("axios");
-
-//routes
-const authRoutes = require("./routes/auth");
-const clinicRoutes = require("./routes/clinic");
-app.use("/api/auth", authRoutes);
-app.use("/api/clinic", clinicRoutes);
-app.use("/api/appointments", require("./routes/appointments"));
-
-// Middleware
-app.use(express.json());
-
+// Session configuration
 const session = require("express-session");
 const MongoStore = require("connect-mongo");
-const { bookAppointmentResponse } = require("./utils/classifiedResponse.js");
 const Mongoose = require("mongoose");
-// Session configuration
 app.use(
   session({
     secret: process.env.SECRET,
@@ -45,6 +26,31 @@ app.use(
     },
   })
 );
+
+// passport
+const passport = require('passport');
+require('./config/passport');
+
+// Initialize Passport and restore authentication state from session
+app.use(passport.initialize());
+app.use(passport.session());
+
+// utils
+const connectMongoDB = require("./utils/connectMongo.js");
+const createUser = require("./utils/createUser.js");
+const classifyUserGeneratedMessage = require("./utils/classifyUserGeneratedMessage");
+const respondAsRequest = require("./utils/respondAsRequest.js");
+const sendMessageToUser = require("./utils/sendMessageToUser.js");
+const setupScheduledTasks = require("./utils/scheduleTasks.js");
+const { default: axios } = require("axios");
+const { bookAppointmentResponse } = require("./utils/classifiedResponse.js");
+
+//routes
+const authRoutes = require("./routes/auth");
+const clinicRoutes = require("./routes/clinic");
+app.use("/api/auth", authRoutes);
+app.use("/api/clinic", clinicRoutes);
+app.use("/api/appointments", require("./routes/appointments"));
 
 // function to connect with mongoDB atlas
 connectMongoDB().then(() => {
