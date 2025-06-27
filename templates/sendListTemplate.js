@@ -6,15 +6,15 @@ const ACCOUNT_ID=process.env.TWILIO_ACCOUNT_ID;
 const AUTH_TOKEN=process.env.TWILIO_AUTH_TOKEN;
 const TwilioClient=twilio(ACCOUNT_ID,AUTH_TOKEN);
 const arrayOfTemplate = [process.env.Book_APPOINMENT_ONE,
-  process.env.Book_APPOINMENT_TWO,
-  process.env.Book_APPOINMENT_THREE,
-  process.env.Book_APPOINMENT_FOUR,
-  process.env.Book_APPOINMENT_FIVE,
-  process.env.Book_APPOINMENT_SIX,
-  process.env.Book_APPOINMENT_SEVEN,
-  process.env.Book_APPOINMENT_EIGHT,
-  process.env.Book_APPOINMENT_NINE,
-  process.env.Book_APPOINMENT_TEN
+  process.env.BOOK_APPOINTMENT_TWO,
+  process.env.BOOK_APPOINTMENT_THREE,
+  process.env.BOOK_APPOINTMENT_FOUR,
+  process.env.BOOK_APPOINTMENT_FIVE,
+  process.env.BOOK_APPOINTMENT_SIX,
+  process.env.BOOK_APPOINTMENT_SEVEN,
+  process.env.BOOK_APPOINTMENT_EIGHT,
+  process.env.BOOK_APPOINTMENT_NINE,
+  process.env.BOOK_APPOINTMENT_TEN
 ]
 
 function generateVariables(clinics) {
@@ -39,7 +39,7 @@ async function sendListTemplate(user) {
       await sendMessageToUser('No clinics found for your pincode. Please try again later.', user.phone);
       return;
     }
-
+    console.log(clinics.clinics.length)
     let templateId=arrayOfTemplate[Math.min(9, clinics.clinics.length - 1)];
     console.log(templateId)
     JSON.stringify(generateVariables(clinics.clinics.slice(0, 10)));
@@ -55,7 +55,4 @@ async function sendListTemplate(user) {
     console.error('Twilio Error:', err.message);
   }
 }
-
-
-
 module.exports = sendListTemplate;

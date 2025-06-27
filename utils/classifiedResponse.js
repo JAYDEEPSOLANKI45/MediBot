@@ -47,10 +47,9 @@ async function bookAppointmentResponse(user, request) {
     // if user.lastData is there, which means, user has selected a clinic and now the time needs to be asked
     if (user.lastRequest=="book-appointment-time") {
       let timeInFormat = await getGeminiGeneratedResponse(`You are given a user's message that contains a time or time-related phrase. Your task is to:
-                1. Convert the given time into a proper 12-hour format.
-                   - Use this format exactly: H:MMAM/PM or H:MMPM (e.g., 2:00PM, 11:23AM).
+                1. Convert the given time into a proper 24-hour format.
+                   - Use this format exactly: HH:MM (e.g., 02:00, 11:23).
                 2. If the user's message refers to a time that has already passed (compared to the current date and time), return only this word: **invalid**
-                3. If the user's message refers to a valid time on a future date (like tomorrow), return in this format: **tomorrow 3:00PM**
                 4. Use the current date and time as your reference when deciding whether the time is valid or not.
                 5. Do not explain your reasoning. Only return the formatted time or the word "invalid".
                 Here is the user's message: ${request}`);
@@ -58,9 +57,8 @@ async function bookAppointmentResponse(user, request) {
       console.log("timeInformate:"+timeInFormat);
       if(timeInFormat.trim()=="invalid")
       {
-        return "You provided an invalid Time format. Either the time is already passed or the time wasn't mentioned. Please provide in a proper time format."
+        return "You provided an invalid Time form at. Either the time is already passed or the time wasn't mentioned. Please provide in a proper time format."
       }
-      console.log("hey")
       let appointment = await bookAppointment(user, timeInFormat);
       if (!appointment) return null;
       // let appointment=new Appointment({clinic:user.lastData.clinicId,user:user._id,data:Date.now(),time:timeInMinutes.trim()});

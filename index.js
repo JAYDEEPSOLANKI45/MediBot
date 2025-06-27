@@ -11,6 +11,7 @@ require("dotenv").config();
 const session = require("express-session");
 const MongoStore = require("connect-mongo");
 const Mongoose = require("mongoose");
+
 app.use(
   session({
     secret: process.env.SECRET,
@@ -65,7 +66,7 @@ app.post("/webhook", async (req, res) => {
   if (user.verified) {
     if (req.body.MessageType == "text") 
     {
-      await classifiedFlow(user,req.body.Body);
+      await classifiedFlow(user,req);
     } 
     else if (req.body.MessageType == "location")
     {
@@ -74,7 +75,7 @@ app.post("/webhook", async (req, res) => {
     }
     else if (req.body.MessageType == "interactive")
     {
-      await interactiveFlow(user);
+      await interactiveFlow(user,req);
     } 
     else 
     {

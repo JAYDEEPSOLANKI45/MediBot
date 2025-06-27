@@ -8,7 +8,7 @@ async function bookAppointment(user, timeInput) {
   const clinic = await Clinic.findById(clinicId);
   if (!clinic) throw new Error("Clinic not found");
     console.log(clinic)
-  const { startTime, endTime } = getAppointmentTimes(timeInput);
+  const { startTime, endTime } = timeInput.split(":").map(Number);
 
   // Optional: Check if time is within clinic hours
   const [openHour, openMin] = clinic.openingTime.split(":").map(Number);
