@@ -16,10 +16,13 @@ async function checkExpiredAppointments() {
       status: 'cancelled'
     }
   );
-  let user=await mediBotUser.findOne({_id:result.user});
-  user.appointment=undefined;
-  await user.save();
-
+  console.log(result)
+  for(let i=0;i<result.length;i)
+  {
+    let user=await mediBotUser.findOne({_id:result[i].user});
+    user.appointment=undefined;
+    await user.save();
+  }
   return result.modifiedCount;
 }
 

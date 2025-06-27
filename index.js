@@ -49,9 +49,9 @@ app.use(
 // function to connect with mongoDB atlas
 connectMongoDB().then(() => {
   // Initialize scheduled tasks after database connection is established
-  setupScheduledTasks();
-}).catch(err => {
-  console.error('Failed to initialize scheduled tasks:', err);
+//   setupScheduledTasks();
+// }).catch(err => {
+//   console.error('Failed to initialize scheduled tasks:', err);
 });
 
 // twilio sends a post request to this endpoint for each message recieved on +14155238886
