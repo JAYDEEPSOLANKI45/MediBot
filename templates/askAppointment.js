@@ -9,7 +9,7 @@ async function askAppointment(geminiResponse, to) {
     const response = await TwilioClient.messages.create({
       from: 'whatsapp:+14155238886',
       to: to,
-      contentSid: 'HX781ab2c0de9297b05694acd3e3ed7fef',
+      contentSid: process.env.ASK_APPOINTMENT,
       contentVariables: JSON.stringify({
         "1": geminiResponse
       })

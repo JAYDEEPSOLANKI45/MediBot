@@ -34,9 +34,10 @@ async function bookAppointment(user, timeInput) {
   // Create appointment
   const appointment = await Appointment.create({
     user: user._id,
-    clinicId,
+    clinic: clinicId, // Using clinic field as per the schema
     startTime,
-    endTime
+    endTime,
+    status: 'pending' // Default status is pending, but explicitly setting it here for clarity
   });
 
   return appointment;

@@ -91,7 +91,7 @@ async function sendListTemplate(user) {
     const response = await TwilioClient.messages.create({
       from: 'whatsapp:+14155238886', 
       to: user.phone, 
-      contentSid: 'HXdc57c43a8b13bc105b8388f0d0c32ae7',
+      contentSid: process.env.SEND_LIST,
       contentVariables: JSON.stringify(generateVariables(clinics.clinics)),
     });
 

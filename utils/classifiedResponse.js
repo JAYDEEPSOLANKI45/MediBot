@@ -39,51 +39,69 @@ async function bookAppointmentResponse(user, request) {
         await listTemplates.get(clinicsList.length)(user.phone,clinicsList);
     */
 
-        // if user.lastData is there, which means, user has selected a clinic and now the time needs to be asked
-  if (user.lastRequest=="book-appointment-time") {
-    let timeInFormat = await getGeminiGeneratedResponse(
-      // time not converted into minutes correctly 11PM - > 10:00
-      "Convert the given time into proper format.**return only in the format : ex: 2:00PM, 11:23AM etc.** if the user have given a tomorrows date then -> tomorrow 3PM. here is user's message: " +
-        request
-    );
-    let appointment = await bookAppointment(user, timeInFormat);
-    if (!appointment) return null;
-    // let appointment=new Appointment({clinic:user.lastData.clinicId,user:user._id,data:Date.now(),time:timeInMinutes.trim()});
-    user.appointment=appointment._id;
-    let clinic=await Clinic.findOne({_id:user.lastData.clinicId});
-    /*
-        not assigning doctor as of now.
-    */
-    console.log(clinic);
-    clinic.appointments.push(appointment._id);
-    user['appointment']=appointment._id;
-    user['lastRequest']="None";
-    user['lastData']=null;
-    await user.save();
-    await clinic.save();
-    await appointment.save();
+        if(user.appointment)
+        {
+          const populatedUser = await user.populate(['appointment', 'appointment.clinic']);
+          return await getGeminiGeneratedResponse(`user has already booked an appointment and is trying to book another, tell them to cancel the previous appointment first before booking another. here are booking details: ${JSON.stringify(populatedUser.appointment)}`);
+        }
+    // if user.lastData is there, which means, user has selected a clinic and now the time needs to be asked
+    if (user.lastRequest=="book-appointment-time") {
+      let timeInFormat = await getGeminiGeneratedResponse(
+        // change the prompt to : if the given time is invalid (the time has passed) then return "invalid" as a reply. **important for prompt - consider current date and time for  this process**
+        "Convert the given time into proper format  if the given time is invalid (the time or date has passed) then return 'invalid' as a reply. **important for prompt - consider current date and time for this process**.**return only in the format : ex: 2:00PM, 11:23AM etc.** if the user have given a tomorrows date then -> tomorrow 3PM. here is user's message: " +
+          request
+      );
+      console.log("timeInformate:"+timeInFormat);
+      if(timeInFormat=="invalid")
+      {
+        return await getGeminiGeneratedResponse("Tell the user that they have given an invalid time. the time can not be from the past. request them to provide a valid time.")
+      }
+      let appointment = await bookAppointment(user, timeInFormat);
+      if (!appointment) return null;
+      // let appointment=new Appointment({clinic:user.lastData.clinicId,user:user._id,data:Date.now(),time:timeInMinutes.trim()});
+      user.appointment=appointment._id;
+      let clinic=await Clinic.findOne({_id:user.lastData.clinicId});
+      /*
+          not assigning doctor as of now.
+      */
+      console.log(clinic);
+      clinic.appointments.push(appointment._id);
+      user['appointment']=appointment._id;
+      user['lastRequest']="None";
+      user['lastData']=null;
+      await user.save();
+      await clinic.save();
+      await appointment.save();
 
-    return await getGeminiGeneratedResponse(
-      "Tell the user that they have confirmed their booking"
-    );
-  }
-  else if(user.lastRequest=="book-appointment")
-  {
-    user['lastRequest']="None";
-    user['lastData']=null;
+      return await getGeminiGeneratedResponse(
+        "Tell the user that they have confirmed their booking"
+      );
+    }
+    else if(user.lastRequest=="book-appointment")
+    {
+      user['lastRequest']="None";
+      user['lastData']=null;
+      await user.save();
+      return "Previously initiated appointment has been cancelled. You can book a new appointment now."
+    }
+    user["lastRequest"] = "book-appointment";
     await user.save();
-    return "Previously initiated appointment has been cancelled. You can book a new appointment now."
-  }
-  user["lastRequest"] = "book-appointment";
-  await user.save();
-  // ask for the clinic.
-  await sendListTemplate(user);
-  return null;
-}
+    // ask for the clinic.
+    await sendListTemplate(user);
+    return null;
+} 
 async function cancelAppointmentResponse(user, request) {
   if(user.appointment)
   {
-    await Appointment.findByIdAndDelete(user.appointment._id);
+    // Update appointment status to cancelled instead of deleting
+    const appointment = await Appointment.findByIdAndUpdate(
+      user.appointment._id,
+      { status: 'cancelled' },
+      { new: true }
+    );
+    
+    // Remove appointment reference from user document
+    user.appointment = undefined;
     user["lastRequest"] = "cancel-appointment";
     await user.save();
     return await getGeminiGeneratedResponse(

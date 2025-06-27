@@ -8,16 +8,31 @@ const appointmentSchema=mongoose.Schema({
     user:{type:mongoose.Schema.Types.ObjectId, ref:"MediBotUser"},
     startTime: { type: Date, required: true },
     endTime: { type: Date, required: true },
-    // status:{type: String, enum: ["pending", "approved", "completed"], default: "pending"},
-    // notes:String
+    status:{type: String, enum: ["pending", "approved", "cancelled", "completed"], default: "pending"},
+    notes: String
 });
 
 
+// Remove appointment reference from user when appointment is deleted
 appointmentSchema.post('findOneAndDelete', async function(doc) {
   if (doc) {
-    await MediBotUser.findByIdAndUpdate(userId, { $unset: { appointment: 1 }});
-    await Clinic.findByIdAndUpdate(doc.clinic, { $pull: { appointments: doc._id } });
+    await MediBotUser.findByIdAndUpdate(doc.user, { $unset: { appointment: 1 }});
+    // We don't remove from clinic appointments as per requirements
   }
+});
+
+// Handle status changes
+appointmentSchema.pre('save', async function(next) {
+  // If this is a new appointment, no need to check for status changes
+  if (this.isNew) {
+    return next();
+  }
+  
+  // If status changed to cancelled or completed, remove from user document
+  if (this.isModified('status') && (this.status === 'cancelled' || this.status === 'completed')) {
+    await MediBotUser.findByIdAndUpdate(this.user, { $unset: { appointment: 1 }});
+  }
+  next();
 });
 
 module.exports=mongoose.model("Appointment",appointmentSchema);

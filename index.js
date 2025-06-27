@@ -12,6 +12,7 @@ const createUser = require("./utils/createUser.js");
 const classifyUserGeneratedMessage = require("./utils/classifyUserGeneratedMessage");
 const respondAsRequest = require("./utils/respondAsRequest.js");
 const sendMessageToUser = require("./utils/sendMessageToUser.js");
+const setupScheduledTasks = require("./utils/scheduleTasks.js");
 const { default: axios } = require("axios");
 
 //routes
@@ -46,7 +47,13 @@ app.use(
 );
 
 // function to connect with mongoDB atlas
-connectMongoDB();
+connectMongoDB().then(() => {
+  // Initialize scheduled tasks after database connection is established
+  setupScheduledTasks();
+  console.log('Scheduled tasks for appointment expiration check initialized');
+}).catch(err => {
+  console.error('Failed to initialize scheduled tasks:', err);
+});
 
 // twilio sends a post request to this endpoint for each message recieved on +14155238886
 app.post("/webhook", async (req, res) => {
@@ -86,7 +93,14 @@ app.post("/webhook", async (req, res) => {
       if (user.lastRequest == "symptoms") {
         if (req.body.Body == "Yes") {
           // sendMessageToUser("Which clinic would you like to book an appointment with?",req.body.From);
-          await bookAppointmentResponse(user, "book request made");
+          let response=await bookAppointmentResponse(user, "book request made");
+          if(response)
+          {
+            await sendMessageToUser(
+            response,
+            req.body.From
+          );
+          }
         } else if (req.body.Body == "No") {
           user.lastRequest = "None";
           user.lastData = null;
