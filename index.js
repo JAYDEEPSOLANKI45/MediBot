@@ -38,18 +38,16 @@ app.use(passport.session());
 // utils
 const connectMongoDB = require("./utils/connectMongo.js");
 const createUser = require("./utils/createUser.js");
-const classifyUserGeneratedMessage = require("./utils/classifyUserGeneratedMessage");
-const respondAsRequest = require("./utils/respondAsRequest.js");
 const sendMessageToUser = require("./utils/sendMessageToUser.js");
-const setupScheduledTasks = require("./utils/scheduleTasks.js");
-const { default: axios } = require("axios");
-const { bookAppointmentResponse } = require("./utils/classifiedResponse.js");
+const classifiedFlow=require("./utils/classifiedFlow.js");
+const saveLocation = require("./utils/saveLocation.js");
+const resetUser = require("./utils/resetUser.js");
+const interactiveFlow = require("./utils/interactiveFlow.js");
 
 //routes
 const authRoutes = require("./routes/auth");
 const clinicRoutes = require("./routes/clinic");
-const saveLocation = require("./utils/saveLocation.js");
-const resetUser = require("./utils/resetUser.js");
+
 app.use("/api/auth", authRoutes);
 app.use("/api/clinic", clinicRoutes);
 app.use("/api/appointments", require("./routes/appointments"));
@@ -67,14 +65,7 @@ app.post("/webhook", async (req, res) => {
   if (user.verified) {
     if (req.body.MessageType == "text") 
     {
-      // classify the user message
-      let classified = await classifyUserGeneratedMessage(req.body.Body);
-
-      // get reply according to request
-      let reply = await respondAsRequest(user, classified, req.body.Body);
-
-      // create a reply using TwilioClient
-      reply? sendMessageToUser(reply, req.body.From):console.log("Interactive message sent to user.");
+      await classifiedFlow(user,req.body.Body);
     } 
     else if (req.body.MessageType == "location")
     {
@@ -83,63 +74,11 @@ app.post("/webhook", async (req, res) => {
     }
     else if (req.body.MessageType == "interactive")
     {
-      /*  if the last request was symptoms then current reply can dictate the flow of current conversation.. Yes means book an appoint
-          else leave the convo
-      */
-      if (user.lastRequest == "symptoms") {
-
-        if (req.body.Body == "Yes") 
-          {
-            // sendMessageToUser("Which clinic would you like to book an appointment with?",req.body.From);
-            let response=await bookAppointmentResponse(user, "book request made");
-            if(response)
-            {
-              await sendMessageToUser(
-              response,
-              req.body.From
-            );
-            }
-          } 
-          else if (req.body.Body == "No") 
-          {
-            resetUser(user);
-            await sendMessageToUser(
-              "Ok, Have a good day. Thank you for using our services.",
-              req.body.From
-            );
-          }
-          else
-          {
-            await sendMessageToUser(
-              "I am sorry I couldn't understand your request, can you please specify again.",
-              req.body.From
-            );
-          }
-      } 
-      else if (user.lastRequest == "book-appointment") 
-      {
-        if (Mongoose.Types.ObjectId.isValid(req.body.Body)) {
-          user.lastRequest = "book-appointment-time";
-          user.lastData = { clinicId: req.body.Body };
-
-          user.save();
-          await sendMessageToUser(
-            "Please provide a time suitable for your visit. example: 11AM, 2PM, 6PM",
-            req.body.From
-          );
-        } else {
-          await sendMessageToUser(
-            "We lost a context of this conversation. Let's start again. How can I help you?.",
-            req.body.From
-          );
-          resetUser(user);
-        }
-      }
-    } else {
-      await sendMessageToUser(
-        "Other media types will be supported in future versions. Thank you for your support.",
-        req.body.From
-      );
+      await interactiveFlow(user);
+    } 
+    else 
+    {
+      await sendMessageToUser("Other media types will be supported in future versions. Thank you for your support.",req.body.From);
     }
   } 
   else {
