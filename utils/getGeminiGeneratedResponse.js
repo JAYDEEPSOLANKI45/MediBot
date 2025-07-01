@@ -1,6 +1,5 @@
 // gemini
 const genAI = require('@google/generative-ai');
-const sendMessageToUser = require('./sendMessageToUser');
 const GeminiClient = new genAI.GoogleGenerativeAI(process.env.GEMINI_KEY);
 
 // function that will take prompt as an input and returns AI generated response

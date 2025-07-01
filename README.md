@@ -1,81 +1,74 @@
-# MediBot Authentication System
+# MediBot
 
 ## Overview
 
-MediBot now uses Passport.js for authentication. This provides a more robust and flexible authentication system with the following benefits:
+MediBot is an innovative healthcare appointment management system that bridges the gap between clinics and patients through an intelligent chatbot interface. The platform streamlines the process of scheduling and managing medical appointments while providing a seamless experience for both healthcare providers and patients.
 
-- Standardized authentication flow
-- Support for multiple authentication strategies
-- Session management
-- Easy to extend with additional authentication methods in the future
+## Key Features
 
-## Authentication Routes
+### For Clinics
+- Secure clinic registration and authentication system
+- Comprehensive appointment management dashboard
+- Real-time appointment status tracking
+- Customizable clinic hours and availability settings
+- Automated appointment reminders and notifications
 
-### Register a New Clinic
+### For Patients
+- Natural language chat interface for booking appointments
+- Intelligent clinic discovery and recommendations
+- Automated appointment scheduling and confirmation
+- Real-time appointment status updates
+- Location-based clinic search
 
-```
-POST /api/auth/register
-```
+## Technical Features
 
-Request body:
-```json
-{
-  "name": "Clinic Name",
-  "address": {
-    "lat": "12.345",
-    "long": "67.890",
-    "pincode": 123456
-  },
-  "phone": "1234567890",
-  "email": "clinic@example.com",
-  "password": "securepassword"
-}
-```
+- Secure authentication system using Passport.js
+- MongoDB database for reliable data storage
+- Real-time messaging capabilities
+- Geolocation services for clinic discovery
+- Natural language processing for chat interactions
+- Automated scheduling system
+- Session management and user tracking
 
-### Login
+## Getting Started
 
-```
-POST /api/auth/login
-```
+### Prerequisites
+- Node.js
+- MongoDB
+- NPM or Yarn
 
-Request body:
-```json
-{
-  "email": "clinic@example.com",
-  "password": "securepassword"
-}
-```
+### Installation
+1. Clone the repository
+2. Install dependencies: `npm install`
+3. Set up environment variables
+4. Start the server: `npm start`
 
-### Logout
+## API Endpoints
 
-```
-POST /api/auth/logout
-```
+### Authentication
+- `POST /api/auth/register` - Register a new clinic
+- `POST /api/auth/login` - Login to clinic dashboard
+- `POST /api/auth/logout` - Logout from the system
+- `GET /api/auth/status` - Check authentication status
 
-Requires authentication.
+### Appointments
+- `GET /api/appointments` - Get all appointments for a clinic
+- `POST /api/appointments` - Create a new appointment
+- `PUT /api/appointments/:id` - Update appointment status
+- `DELETE /api/appointments/:id` - Cancel an appointment
 
-### Check Authentication Status
+## Security
 
-```
-GET /api/auth/status
-```
+- Secure password hashing using bcrypt
+- Session-based authentication
+- Protected API endpoints
+- MongoDB session storage
+- Input validation and sanitization
 
-Returns the current authentication status and user information if authenticated.
+## Contributing
 
-## Protected Routes
+Contributions are welcome! Please feel free to submit a Pull Request.
 
-All routes that require authentication use the `isAuthenticated` middleware. This middleware checks if the user is authenticated using Passport.js and falls back to the session-based authentication for backward compatibility.
+## License
 
-## How to Use
-
-1. Register a new clinic using the registration endpoint
-2. Login using the login endpoint
-3. Access protected routes with the authentication session
-4. Logout when finished
-
-## Implementation Details
-
-- Passport Local Strategy is used for username/password authentication
-- Sessions are stored in MongoDB using connect-mongo
-- Passwords are hashed using bcrypt
-- Authentication state is maintained across requests using sessions
+This project is licensed under the MIT License - see the LICENSE file for details.

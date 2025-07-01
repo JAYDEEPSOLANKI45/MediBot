@@ -5,7 +5,7 @@ const sendMessageToUser = require('./appointmentReminderTemplate');
 const ACCOUNT_ID=process.env.TWILIO_ACCOUNT_ID;
 const AUTH_TOKEN=process.env.TWILIO_AUTH_TOKEN;
 const TwilioClient=twilio(ACCOUNT_ID,AUTH_TOKEN);
-const arrayOfTemplate = [process.env.BOOK_APPOINMENT_ONE,
+const arrayOfTemplate = [process.env.BOOK_APPOINTMENT_ONE,
   process.env.BOOK_APPOINTMENT_TWO,
   process.env.BOOK_APPOINTMENT_THREE,
   process.env.BOOK_APPOINTMENT_FOUR,

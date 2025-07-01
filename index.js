@@ -11,7 +11,6 @@ require("dotenv").config();
 const session = require("express-session");
 const MongoStore = require("connect-mongo");
 const Mongoose = require("mongoose");
-
 app.use(
   session({
     secret: process.env.SECRET,
@@ -29,8 +28,8 @@ app.use(
 );
 
 // passport
-const passport = require('passport');
-require('./config/passport');
+const passport = require("passport");
+require("./config/passport");
 
 // Initialize Passport and restore authentication state from session
 app.use(passport.initialize());
@@ -40,7 +39,7 @@ app.use(passport.session());
 const connectMongoDB = require("./utils/connectMongo.js");
 const createUser = require("./utils/createUser.js");
 const sendMessageToUser = require("./utils/sendMessageToUser.js");
-const classifiedFlow=require("./utils/classifiedFlow.js");
+const classifiedFlow = require("./utils/classifiedFlow.js");
 const saveLocation = require("./utils/saveLocation.js");
 const resetUser = require("./utils/resetUser.js");
 const interactiveFlow = require("./utils/interactiveFlow.js");
@@ -64,25 +63,23 @@ app.post("/webhook", async (req, res) => {
   let user = await createUser(req.body.ProfileName, req.body.From);
 
   if (user.verified) {
-    if (req.body.MessageType == "text") 
-    {
-      await classifiedFlow(user,req);
-    } 
-    else if (req.body.MessageType == "location")
-    {
-      saveLocation(user,req.body.Latitude,req.body.Longitude);
-      await sendMessageToUser("Your location has been updated, How can I help you further?",req.body.From);
+    if (req.body.MessageType == "text") {
+      await classifiedFlow(user, req);
+    } else if (req.body.MessageType == "location") {
+      saveLocation(user, req.body.Latitude, req.body.Longitude);
+      await sendMessageToUser(
+        "Your location has been updated, How can I help you further?",
+        req.body.From
+      );
+    } else if (req.body.MessageType == "interactive") {
+      await interactiveFlow(user, req);
+    } else {
+      await sendMessageToUser(
+        "Other media types will be supported in future versions. Thank you for your support.",
+        req.body.From
+      );
     }
-    else if (req.body.MessageType == "interactive")
-    {
-      await interactiveFlow(user,req);
-    } 
-    else 
-    {
-      await sendMessageToUser("Other media types will be supported in future versions. Thank you for your support.",req.body.From);
-    }
-  } 
-  else {
+  } else {
     if (req.body.MessageType == "text") {
       // create a reply using TwilioClient
       await sendMessageToUser(
@@ -91,12 +88,11 @@ app.post("/webhook", async (req, res) => {
       );
     } else if (req.body.MessageType == "location") {
       user["verified"] = true;
-      saveLocation(user,req.body.Latitude,req.body.Longitude);
+      saveLocation(user, req.body.Latitude, req.body.Longitude);
       await sendMessageToUser(
         "Thank you, Your location has been added. How can I help you today?",
         req.body.From
       );
-      
     } else {
       await sendMessageToUser(
         "Other media types will be supported in future versions. Thank you for your support.",

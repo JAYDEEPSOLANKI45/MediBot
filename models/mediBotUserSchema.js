@@ -7,7 +7,8 @@ const mediBotUserSchema=mongoose.Schema({
     verified:{type:Boolean, default:false},
     appointment:{type:mongoose.Schema.Types.ObjectId, ref:"Appointment"},
     lastRequest:{type:String,default:"None"},
-    lastData:{type:{clinicId:{type:mongoose.Types.ObjectId},time:{type:String}},default:null}
+    lastData:{type:{clinicId:{type:mongoose.Types.ObjectId},time:{type:String}},default:null},
+    trust_score:{type:Number,default:100}
 });
 
 module.exports=mongoose.model("MediBotUser",mediBotUserSchema)
