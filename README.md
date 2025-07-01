@@ -30,33 +30,6 @@ MediBot is an innovative healthcare appointment management system that bridges t
 - Automated scheduling system
 - Session management and user tracking
 
-## Getting Started
-
-### Prerequisites
-- Node.js
-- MongoDB
-- NPM or Yarn
-
-### Installation
-1. Clone the repository
-2. Install dependencies: `npm install`
-3. Set up environment variables
-4. Start the server: `npm start`
-
-## API Endpoints
-
-### Authentication
-- `POST /api/auth/register` - Register a new clinic
-- `POST /api/auth/login` - Login to clinic dashboard
-- `POST /api/auth/logout` - Logout from the system
-- `GET /api/auth/status` - Check authentication status
-
-### Appointments
-- `GET /api/appointments` - Get all appointments for a clinic
-- `POST /api/appointments` - Create a new appointment
-- `PUT /api/appointments/:id` - Update appointment status
-- `DELETE /api/appointments/:id` - Cancel an appointment
-
 ## Security
 
 - Secure password hashing using bcrypt
@@ -65,10 +38,3 @@ MediBot is an innovative healthcare appointment management system that bridges t
 - MongoDB session storage
 - Input validation and sanitization
 
-## Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
